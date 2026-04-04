@@ -1,0 +1,126 @@
+name: EcoTrack Backend API
+description: NestJS backend for personal carbon footprint tracking application
+version: 1.0.0
+
+# OpenSpec Configuration
+openspec:
+  version: 1.0
+  framework: nestjs
+  language: typescript
+  
+  # API Specification
+  api:
+    type: rest
+    format: openapi
+    version: "3.0.0"
+  
+  # Database
+  database:
+    type: postgresql
+    version: "16"
+    orm: typeorm
+  
+  # Authentication
+  auth:
+    strategy: jwt
+    provider: passport
+  
+  # Code generation
+  codegen:
+    enabled: true
+    generator: nestjs-swagger
+    output: src/api
+
+# Project Structure
+project:
+  root: ./
+  src: ./src
+  dist: ./dist
+  test: ./test
+
+# Modules to Implement (in order)
+modules:
+  - name: Database & Entities
+    description: PostgreSQL setup and TypeORM entities
+    priority: 1
+    status: planned
+    
+  - name: Authentication
+    description: JWT-based user authentication
+    priority: 2
+    status: planned
+    dependencies:
+      - Database & Entities
+    
+  - name: User Management
+    description: User profile and account management
+    priority: 3
+    status: planned
+    dependencies:
+      - Authentication
+    
+  - name: Emission Factors
+    description: Reference data for CO2 calculations
+    priority: 4
+    status: planned
+    dependencies:
+      - Database & Entities
+    
+  - name: Activities
+    description: Activity logging and CO2 calculation
+    priority: 5
+    status: planned
+    dependencies:
+      - Authentication
+      - Emission Factors
+    
+  - name: Analytics
+    description: Dashboard and reporting APIs
+    priority: 6
+    status: planned
+    dependencies:
+      - Activities
+    
+  - name: Recommendations
+    description: AI-driven recommendation engine
+    priority: 7
+    status: planned
+    dependencies:
+      - Analytics
+      - Activities
+
+# Environment Configuration
+environment:
+  development:
+    DATABASE_HOST: localhost
+    DATABASE_PORT: 5432
+    DATABASE_USER: ecotrack_user
+    DATABASE_NAME: ecotrack_db
+    PORT: 3001
+    NODE_ENV: development
+    
+  production:
+    PORT: 3001
+    NODE_ENV: production
+
+# Testing Configuration
+testing:
+  framework: jest
+  coverage:
+    threshold: 70
+  integration:
+    database: test-db
+
+# Documentation
+documentation:
+  enabled: true
+  format: swagger
+  path: /api-docs
+  
+# Validation Rules
+validation:
+  inputSanitization: true
+  typeChecking: strict
+  linting:
+    enabled: true
+    config: .eslintrc.json
