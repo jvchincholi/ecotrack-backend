@@ -88,11 +88,13 @@ export class ActivitiesService {
         unit: createActivityDto.unit,
         co2Emitted,
         date: new Date(createActivityDto.date),
+        description: createActivityDto.description,
       });
 
       const savedActivity = await this.activityRepository.save(activity);
       return this.mapToResponseDto(savedActivity);
     } catch (error) {
+      console.error('Activity creation error:', error);
       if (error instanceof BadRequestException) {
         throw error;
       }
@@ -241,6 +243,9 @@ export class ActivitiesService {
       }
       if (updateActivityDto.date !== undefined) {
         activity.date = new Date(updateActivityDto.date);
+      }
+      if (updateActivityDto.description !== undefined) {
+        activity.description = updateActivityDto.description;
       }
 
       // Recalculate emissions if type or value changed
