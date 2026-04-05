@@ -5,10 +5,11 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { ActivitiesModule } from './activities/activities.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
-  imports: [DatabaseModule, AuthModule, UsersModule],
+  imports: [DatabaseModule, AuthModule, UsersModule, ActivitiesModule],
   controllers: [AppController],
   providers: [
     AppService,
