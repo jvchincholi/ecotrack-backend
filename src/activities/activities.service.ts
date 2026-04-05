@@ -94,7 +94,6 @@ export class ActivitiesService {
       const savedActivity = await this.activityRepository.save(activity);
       return this.mapToResponseDto(savedActivity);
     } catch (error) {
-      console.error('Activity creation error:', error);
       if (error instanceof BadRequestException) {
         throw error;
       }
