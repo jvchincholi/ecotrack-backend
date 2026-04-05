@@ -9,6 +9,15 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthResponseDto, TokenPayloadDto } from './dto/auth-response.dto';
 
+/**
+ * Authentication Service
+ * 
+ * Handles all authentication-related operations including user registration, login,
+ * token generation, and refresh token management. Integrates with UsersService
+ * for user management and JwtService for token generation.
+ * 
+ * @class AuthService
+ */
 @Injectable()
 export class AuthService {
   constructor(
@@ -17,7 +26,25 @@ export class AuthService {
   ) {}
 
   /**
-   * Register a new user
+   * Register a new user with email and password
+   * 
+   * Creates a new user account and generates JWT tokens for authentication.
+   * Password must meet security requirements: minimum 8 characters with lowercase,
+   * uppercase, and numeric characters.
+   * 
+   * @param {RegisterDto} registerDto - User registration data including email, password, firstName, lastName
+   * @returns {Promise<AuthResponseDto>} Authentication response containing accessToken, refreshToken, and user info
+   * @throws {BadRequestException} If email already exists or validation fails
+   * @throws {InternalServerErrorException} If user creation fails
+   * 
+   * @example
+   * const response = await authService.register({
+   *   email: 'user@example.com',
+   *   password: 'Password123',
+   *   firstName: 'John',
+   *   lastName: 'Doe'
+   * });
+   * // Returns { accessToken: 'jwt...', refreshToken: 'jwt...', user: {...} }
    */
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     const user = await this.usersService.create(registerDto);
@@ -39,7 +66,22 @@ export class AuthService {
   }
 
   /**
-   * Authenticate user with email and password
+   * Authenticate a user with email and password
+   * 
+   * Validates user credentials against stored hashed password and generates new JWT tokens.
+   * Updates the user's lastLoginAt timestamp on successful authentication.
+   * 
+   * @param {LoginDto} loginDto - Login credentials containing email and password
+   * @returns {Promise<AuthResponseDto>} Authentication response containing accessToken, refreshToken, and user info
+   * @throws {UnauthorizedException} If email not found or password is incorrect
+   * @throws {InternalServerErrorException} If database operation fails
+   * 
+   * @example
+   * const response = await authService.login({
+   *   email: 'user@example.com',
+   *   password: 'Password123'
+   * });
+   * // Returns { accessToken: 'jwt...', refreshToken: 'jwt...', user: {...} }
    */
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const user = await this.validateUser(
@@ -73,6 +115,18 @@ export class AuthService {
 
   /**
    * Validate user credentials
+   * 
+   * Checks if a user exists with the provided email and verifies the password
+   * matches the stored hashed password using bcrypt comparison.
+   * 
+   * @param {string} email - User email address
+   * @param {string} password - Plain text password to validate
+   * @returns {Promise<Object | null>} User object with id, email, firstName, lastName if valid, null otherwise
+   * @throws {UnauthorizedException} If email not found or password invalid
+   * 
+   * @example
+   * const user = await authService.validateUser('user@example.com', 'Password123');
+   * // Returns { id: 'uuid', email: 'user@example.com', firstName: 'John', lastName: 'Doe' }
    */
   async validateUser(
     email: string,
@@ -99,7 +153,28 @@ export class AuthService {
   }
 
   /**
-   * Generate access and refresh tokens
+   * Generate JWT access and refresh tokens
+   * 
+   * Creates a pair of JWT tokens:
+   * - Access Token: Short-lived token (default 1 hour) for API authentication
+   * - Refresh Token: Long-lived token (default 7 days) for obtaining new access tokens
+   * 
+   * Token expiration times are configurable via environment variables:
+   * - JWT_EXPIRATION: Access token TTL (default: '3600s')
+   * - JWT_REFRESH_EXPIRATION: Refresh token TTL (default: '604800s')
+   * 
+   * @param {Object} payload - Token payload containing user identification
+   * @param {string} payload.sub - User ID (subject claim)
+   * @param {string} payload.email - User email address
+   * @returns {Promise<Object>} Object containing accessToken and refreshToken strings
+   * @throws {Error} If JWT signing fails
+   * 
+   * @example
+   * const tokens = await authService.generateTokens({
+   *   sub: 'user-uuid',
+   *   email: 'user@example.com'
+   * });
+   * // Returns { accessToken: 'eyJhbGc...', refreshToken: 'eyJhbGc...' }
    */
   async generateTokens(payload: {
     sub: string;
@@ -118,7 +193,21 @@ export class AuthService {
   }
 
   /**
-   * Refresh access token using refresh token
+   * Refresh expired access token using refresh token
+   * 
+   * Validates the provided refresh token and generates a new access token.
+   * This allows users to maintain their session without re-entering credentials.
+   * Refresh token must be valid, not expired, and belong to an existing user.
+   * 
+   * @param {string} refreshToken - Valid JWT refresh token
+   * @returns {Promise<string>} New access token
+   * @throws {UnauthorizedException} If refresh token is invalid, expired, or user not found
+   * 
+   * @example
+   * const newAccessToken = await authService.refreshToken(
+   *   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+   * );
+   * // Returns new access token string
    */
   async refreshToken(refreshToken: string): Promise<string> {
     try {
@@ -149,7 +238,19 @@ export class AuthService {
   }
 
   /**
-   * Get current user details from token payload
+   * Retrieve current authenticated user's profile
+   * 
+   * Fetches the user profile from the database using the user ID extracted
+   * from the JWT token. Used by the GET /api/auth/me endpoint to return
+   * the authenticated user's information.
+   * 
+   * @param {string} userId - User ID from JWT token subject claim
+   * @returns {Promise<CurrentUserDto>} User profile containing id, email, firstName, lastName, and createdAt
+   * @throws {UnauthorizedException} If user not found in database
+   * 
+   * @example
+   * const user = await authService.getCurrentUser('550e8400-e29b-41d4-a716-446655440000');
+   * // Returns { id: '550e8400...', email: 'user@example.com', firstName: 'John', lastName: 'Doe', createdAt: Date }
    */
   async getCurrentUser(userId: string) {
     const user = await this.usersService.findById(userId);

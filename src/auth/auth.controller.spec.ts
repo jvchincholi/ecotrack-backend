@@ -67,12 +67,23 @@ describe('AuthController', () => {
         lastName: 'Smith',
       };
 
-      mockAuthService.register.mockResolvedValue(mockAuthResponse);
+      const registerResponse = {
+        accessToken: 'mock.access.token',
+        refreshToken: 'mock.refresh.token',
+        user: {
+          id: mockUser.id,
+          email: registerDto.email,
+          firstName: registerDto.firstName,
+          lastName: registerDto.lastName,
+        },
+      };
+
+      mockAuthService.register.mockResolvedValue(registerResponse);
 
       const result = await controller.register(registerDto);
 
       expect(authService.register).toHaveBeenCalledWith(registerDto);
-      expect(result).toEqual(mockAuthResponse);
+      expect(result).toEqual(registerResponse);
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
       expect(result.user.email).toBe(registerDto.email);
@@ -194,9 +205,9 @@ describe('AuthController', () => {
     });
 
     it('should throw BadRequestException if refresh token is missing', async () => {
-      expect(() => {
-        controller.refresh('');
-      }).toThrow(BadRequestException);
+      await expect(controller.refresh('')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw UnauthorizedException if refresh token is invalid', async () => {
@@ -273,14 +284,25 @@ describe('AuthController', () => {
         lastName: 'Smith',
       };
 
+      const registerResponse = {
+        accessToken: 'mock.access.token',
+        refreshToken: 'mock.refresh.token',
+        user: {
+          id: mockUser.id,
+          email: registerDto.email,
+          firstName: registerDto.firstName,
+          lastName: registerDto.lastName,
+        },
+      };
+
       // Register
-      mockAuthService.register.mockResolvedValue(mockAuthResponse);
+      mockAuthService.register.mockResolvedValue(registerResponse);
       const registerResult = await controller.register(registerDto);
       expect(registerResult).toHaveProperty('accessToken');
 
       // Login
       jest.clearAllMocks();
-      mockAuthService.login.mockResolvedValue(mockAuthResponse);
+      mockAuthService.login.mockResolvedValue(registerResponse);
       const loginResult = await controller.login({
         email: registerDto.email,
         password: registerDto.password,
@@ -289,7 +311,7 @@ describe('AuthController', () => {
 
       // Get current user
       jest.clearAllMocks();
-      mockAuthService.getCurrentUser.mockResolvedValue(mockAuthResponse.user);
+      mockAuthService.getCurrentUser.mockResolvedValue(registerResponse.user);
       const userResult = await controller.getCurrentUser({ sub: mockUser.id });
       expect(userResult.email).toBe(registerDto.email);
     });

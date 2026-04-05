@@ -255,7 +255,13 @@ describe('AuthService', () => {
       const result = await authService.getCurrentUser(mockUser.id);
 
       expect(usersService.findById).toHaveBeenCalledWith(mockUser.id);
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual({
+        id: mockUser.id,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        createdAt: mockUser.createdAt,
+      });
     });
 
     it('should throw UnauthorizedException if user not found', async () => {
